@@ -11,6 +11,10 @@ use MooseX::ClassAttribute;
 
 use experimental 'signatures';
 
+has components => (
+    is => 'ro',
+);
+
 has template => (
     is => 'ro',
     lazy => 1,
@@ -43,13 +47,14 @@ sub process_directives( $self, $doc, @context ) {
     # do the 'v-for'
     # TODO have to think about v-fors in v-fors
     $doc->find( '[v-for]' )->each( sub{
-        my @items = Template::Mustache::resolve_context( $_->attr('v-for'), \@context )->@*;
+        my( $item, $key ) = split /\s+in\s+/, $_->attr('v-for'), 2;
+        my @items = Template::Mustache::resolve_context( $key, \@context )->@*;
 
         my $block = $_;
         $block->attr('v-for' => undef);
 
         my $new = join '', map {  
-            $self->process_directives( $block->clone->as_html, { item => $_ }, @context );
+            $self->process_directives( $block->clone->as_html, { $item => $_ }, @context );
         } @items;
         $block->after($new);
         $block->detach;
@@ -57,6 +62,20 @@ sub process_directives( $self, $doc, @context ) {
     });
 
     # do the 'v-if'
+    $doc->find('.')->and_back->filter( '[v-if]' )->each( sub{
+        my $block = $_;
+        my($variable,$rest) = split / /, $_->attr('v-if'), 2; 
+        $block->attr('v-if' => undef);
+
+        my $bool = eval qq{
+            Template::Mustache::resolve_context( '$variable', \\\@context )
+            $rest
+        };
+        warn $@ if $@;
+        warn $bool;
+        $block->remove unless $bool;
+        
+    });
 
     #  do the ':extrapolation'
     $doc->find('.')->and_back->each( sub {
@@ -76,13 +95,17 @@ sub process_directives( $self, $doc, @context ) {
 
     # process sub-components
 
-    for my $component ( $self->components->@* ) {
+    for my $component ( eval {  $self->components->@* } ) {
         my $name = lc $component =~ s/.*:://r;
         $doc->find($name)->each(sub{
-            die $_;
+            my $elt = $_;
+            use Module::Runtime qw/ use_module /;
+            my %attr = map { $_ => $elt->attr($_) } $_->{trees}[0]->all_attr;
+            my $sub = use_module($component)->new( %attr );
+            $elt->after($sub->render);
+            $elt->detach;
         });
     }
-
 
     $doc->as_html;
 }

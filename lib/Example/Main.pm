@@ -1,36 +1,25 @@
 package Example::Main;
 
 =begin template
+
 <div>
     <h1>{{ title }}</h1>
 
     <ul>
-        <Item v-for="items" 
-            v-if="$item ne 'skip_me'" :label="item"  />
+        <Item 
+            v-for="item in items" 
+            v-if="item ne 'skip_me'" 
+            :label="item"  
+        />
     </ul>
 </div>
 
-=end template
-
 =cut
 
-use Moose;
-with 'Pvue';
+use Template::Vue;
 
-has components => (
-    is => 'ro',
-    default => sub { [ qw/ Example::Item / ] },
-);
+components 'Example::Item';
 
-has title => ( 
-    traits => [ 'Prop' ],
-    is => 'ro',
-);
-
-has items => ( 
-    traits => [ 'Prop' ],
-    is => 'ro',
-);
-
+props qw/ title items /;
 
 1;
