@@ -2,10 +2,11 @@ package Example::Main;
 
 =begin template
 <div>
-    <h1>{{ title }}<h1>
+    <h1>{{ title }}</h1>
 
     <ul>
-        <li v-for="items" v-if="$_->{label} ne 'skip_me'" :label="$_->{label}"  />
+        <Item v-for="items" 
+            v-if="$item ne 'skip_me'" :label="item"  />
     </ul>
 </div>
 
