@@ -1,4 +1,4 @@
-package Pvue {
+package Template::Vue;
 
 use Path::Tiny;
 use Module::Info;
@@ -7,12 +7,11 @@ use Moose::Role;
 
 use Template::Mustache::Trait;
 
-use MooseX::ClassAttribute;
-
 use experimental 'signatures';
 
 has components => (
     is => 'ro',
+    default => sub { [] },
 );
 
 has template => (
@@ -26,22 +25,14 @@ has template => (
             /^=begin\s+template\s*$/../^=(?:end\s+template|cut)\s*$/ } path($file)->lines;
 
     },
-);
-
-has _mustache => (
-    is => 'ro',
     traits => [ 'Mustache' ],
-    lazy => 1,
-    default => sub($self) { $self->template },
     handles => { render_mustache => 'render' },
 );
 
 use Web::Query::LibXML;
 use experimental 'postderef';
 sub process_directives( $self, $doc, @context ) {
-    $DB::single = 1;
     @context = ( $self ) unless @context;
-            use DDP; p @context;
     $doc = Web::Query::LibXML->new( $doc, { indent => '  ' }) unless ref $doc;
 
     # do the 'v-for'
@@ -117,18 +108,6 @@ sub render($self) {
     my $directived = $self->process_directives( $mustached );
 
     $directived;
-}
-
-}
-
-
-package Pvue::Prop {
-
-use Moose::Util;
-use Moose::Role;
-
-Moose::Util::meta_attribute_alias('Prop');
-
 }
 
 

@@ -16,10 +16,11 @@ package Example::Main;
 
 =cut
 
-use Template::Vue;
+use Moose;
+with 'Template::Vue';
 
-components 'Example::Item';
+has '+components' => default => sub {[ 'Example::Item' ]};
 
-props qw/ title items /;
+has [qw/ title items /] => ( is => 'ro' );
 
 1;
