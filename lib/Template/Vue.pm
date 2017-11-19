@@ -62,8 +62,6 @@ sub process_directives( $self, $doc, @context ) {
             Template::Mustache::resolve_context( '$variable', \\\@context )
             $rest
         };
-        warn $@ if $@;
-        warn $bool;
         $block->remove unless $bool;
         
     });
@@ -74,9 +72,7 @@ sub process_directives( $self, $doc, @context ) {
         my @attrs = map { $_->all_attr } $_->{trees}->@*;
         for my $attr ( @attrs ) {
             next unless $attr =~ s/^://;
-            $DB::single = 1;
             my $v = $elt->attr( ':'.$attr);
-            warn $doc->as_html;
             $elt->attr( ':'.$attr => undef );
             $elt->attr( $attr => Template::Mustache::resolve_context( 
                 $v,  \@context
